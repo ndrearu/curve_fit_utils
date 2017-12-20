@@ -50,6 +50,12 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
               method. This should be the preferred choice in the case
               of a NLLS regression.
 
+    nboots : int, optional
+              Number of bootstrap resamples used if bootstrap method
+              is selected. Default is 256 if absolute_sigma is True,
+              otherwise it is set to the minimum between 256 and N^N,
+              where N is number of data points.
+
     full_output : bool, optional
               If False, upper and lower bounds of the band are
               returned. Otherwise, also central predicted response,
@@ -93,7 +99,7 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
     non-linear case (NLLS) despite a bootstrap procedure should be
     preferred (TODO upcoming in new versions).
     II) In this version prediction interval can be computed only on
-    original data 'xdata' if absolute_sigma is True. 
+    original data 'xdata' if absolute_sigma is True.
 
     """
 
@@ -131,29 +137,36 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
     # mean predicted response
     pr_mean = model(x, *popt)
 
+    if not bootstrap :
 
-    # compute jacobian around popt
-    def model_p(p, z):
-        return model(z, *p)
+        # compute jacobian around popt
+        def model_p(p, z):
+            return model(z, *p)
 
-    npoints = len(x)
-    jac = np.array([])
-    jac_shape = (npoints, npars)
+        npoints = len(x)
+        jac = np.array([])
+        jac_shape = (npoints, npars)
 
-    for z in x :
-        dp = approx_fprime(popt, model_p, 10e-6, z)
-        jac = np.append(jac, dp)
+        for z in x :
+            dp = approx_fprime(popt, model_p, 10e-6, z)
+            jac = np.append(jac, dp)
 
-    jac = np.reshape(jac, jac_shape)
-    jac_transposed = np.transpose(jac)
+        jac = np.reshape(jac, jac_shape)
+        jac_transposed = np.transpose(jac)
 
 
-    # compute predicted response variance
-    # optimized way to do equivalently
-    # np.diag(np.dot(jac, np.dot(pcov, jac_tranposed) )
-    pr_var = np.dot(pcov, jac_transposed)
-    pr_var = pr_var * jac_transposed
-    pr_var = np.sum(pr_var, axis=0)
+        # compute predicted response variance
+        # optimized way to do equivalently
+        # np.diag(np.dot(jac, np.dot(pcov, jac_tranposed) )
+        pr_var = np.dot(pcov, jac_transposed)
+        pr_var = pr_var * jac_transposed
+        pr_var = np.sum(pr_var, axis=0)
+
+    elif bootstrap and absolute_sigma :
+
+        for n in nboots :
+
+        
 
     if not absolute_sigma :
         #estimate variance with MSE
