@@ -7,8 +7,8 @@ from scipy.stats import norm, t, chi2
 
 
 def confidence_band(model, xdata, ydata, confidence_level=0.6827,
-                     xvals=None, prediction=False, bootstrap=False,
-                     full_output=False, **kwargs):
+                    xvals=None, prediction=False, bootstrap=False,
+                    num_boots=1000, full_output=False, **kwargs):
 
     """Compute confidence or prediction bands of a model optimized by a
     curve fit regression with Least Square method.
@@ -50,10 +50,10 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
               method. This should be the preferred choice in the case
               of a NLLS regression.
 
-    nboots : int, optional
+    num_boots : int, optional
               Number of bootstrap resamples used if bootstrap method
-              is selected. Default is 256 if absolute_sigma is True,
-              otherwise it is set to the minimum between 256 and N^N,
+              is selected. Default is 1000 if absolute_sigma is True,
+              otherwise it is set to the minimum between 1000 and N^N,
               where N is number of data points.
 
     full_output : bool, optional
@@ -111,6 +111,8 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
     # some stuff needed below
     ndata = len(xdata)
     npars = len(popt)
+    p0 = np.ones( npars )
+    p0 = kwargs.get('p0', p0)
     sigma = np.ones( ndata )
     sigma = kwargs.get('sigma', sigma)
     absolute_sigma = kwargs.get('absolute_sigma', False)
@@ -162,10 +164,32 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
         pr_var = pr_var * jac_transposed
         pr_var = np.sum(pr_var, axis=0)
 
+        print pr_var
+
     elif bootstrap and absolute_sigma :
 
-        for n in nboots :
+        npoints = len(x)
+        # matrix of predicted values
+        pr_matrix_b = np.array([])
+        pr_matrix_b_shape = (num_boots, npoints)
+        
+        for n in np.arange(num_boots) :
 
+            # generate bootstrap sample of ydata
+            ydata_b = np.random.normal(loc=ydata, scale=sigma)
+            popt_b, pcov_b = curve_fit(model, xdata, ydata_b, p0=p0)
+
+            # save predicted responses
+            pr_mean_b = model(x, *popt_b)
+            pr_matrix_b = np.append(pr_matrix_b, pr_mean_b)
+
+        pr_matrix_b = np.reshape(pr_matrix_b, pr_matrix_b_shape)
+        pr_var = np.var(pr_matrix_b, axis=0, ddof=1)
+
+    else :
+        #here the code will be the same as above, so it is convinien
+        #to use a if inside the for with if absolue sigma or not (in the
+        #other case bootstrap the residuals
         
 
     if not absolute_sigma :
