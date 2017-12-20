@@ -8,7 +8,7 @@ from scipy.stats import norm, t, chi2
 
 def confidence_band(model, xdata, ydata, confidence_level=0.6827,
                     xvals=None, prediction=False, bootstrap=False,
-                    num_boots=1000, full_output=False, **kwargs):
+                    num_boots=500, full_output=False, **kwargs):
 
     """Compute confidence or prediction bands of a model optimized by a
     curve fit regression with Least Square method.
@@ -156,46 +156,67 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
         jac = np.reshape(jac, jac_shape)
         jac_transposed = np.transpose(jac)
 
-
         # compute predicted response variance
         # optimized way to do equivalently
         # np.diag(np.dot(jac, np.dot(pcov, jac_tranposed) )
         pr_var = np.dot(pcov, jac_transposed)
         pr_var = pr_var * jac_transposed
         pr_var = np.sum(pr_var, axis=0)
-
-        print pr_var
-
-    elif bootstrap and absolute_sigma :
+     
+    else :
 
         npoints = len(x)
         # matrix of predicted values
         pr_matrix_b = np.array([])
         pr_matrix_b_shape = (num_boots, npoints)
-        
+
+        # prepare collection of resamples
+        ydata_matrix_b = np.array([])
+
+        if absolute_sigma :
+
+            ydata_cov = np.diag( sigma**2 )
+            ydata_matrix_b = np.random.multivariate_normal(ydata, ydata_cov, size=(num_boots))
+            
+            # for n in np.arange(num_boots) :
+            #     ydata_b = np.random.normal(loc=ydata, scale=sigma)
+            #     ydata_matrix_b = np.append(ydata_matrix_b, ydata_b)
+
+        else :
+
+            ypred = model(xdata, *popt)
+            residuals = ydata - ypred
+            
+            #ydata_matrix_b = np.tile(ypred, (num_boots, 1) )
+            ydata_matrix_b = np.random.choice(residuals, size=(ndata, num_boots))
+            print ydata_matrix_b
+
+            # # bootstrap residuals at 'fixed x'
+            # ypred = model(xdata, *popt)
+            # residuals = ydata - ypred
+
+            # for n in np.arange(num_boots) :
+            #     ydata_b = ypred + np.random.choice(residuals, ndata)
+            #     ydata_matrix_b = np.append(ydata_matrix_b, ydata_b)
+
+        # ydata_matrix_b = np.reshape(ydata_matrix_b, ydata_matrix_b_shape)
+
         for n in np.arange(num_boots) :
+            ydata_b = ydata_matrix_b[n]
+            popt_b, pcov_b = curve_fit(model, xdata, ydata_b, p0=popt)
 
-            # generate bootstrap sample of ydata
-            ydata_b = np.random.normal(loc=ydata, scale=sigma)
-            popt_b, pcov_b = curve_fit(model, xdata, ydata_b, p0=p0)
-
-            # save predicted responses
             pr_mean_b = model(x, *popt_b)
             pr_matrix_b = np.append(pr_matrix_b, pr_mean_b)
 
         pr_matrix_b = np.reshape(pr_matrix_b, pr_matrix_b_shape)
         pr_var = np.var(pr_matrix_b, axis=0, ddof=1)
 
-    else :
-        #here the code will be the same as above, so it is convinien
-        #to use a if inside the for with if absolue sigma or not (in the
-        #other case bootstrap the residuals
-        
+        print pr_var
 
+        
     if not absolute_sigma :
         #estimate variance with MSE
         pr_var = MSE * pr_var
-    
 
     #stat factors
     rtail = .5 + confidence_level / 2.
