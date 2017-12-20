@@ -189,7 +189,7 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
     
 
 
-def chi2_gof_test(model, xdata, ydata, popt, sigma=None, full_output=False):
+def chi2_gof_test(model, xdata, ydata, popt, sigma=None, counts=False, full_output=False):
     """Performs the Chi Square Goodness of Fit test on a model
     with parameters optimized through a least square curve fit
     procedure in 1d.
@@ -214,6 +214,10 @@ def chi2_gof_test(model, xdata, ydata, popt, sigma=None, full_output=False):
 
     sigma : scalar or array-like, optional
              Determines the uncertainty in 'ydata'. 
+   
+    counts : bool, optional
+             If True, ydata are considered frequencies or counts so that
+             sigma is substituted by the expected frequencies.
 
     full_output : bool, optional
              If True, the Mean Squared Error (MSE) is returned together with 
@@ -250,6 +254,9 @@ def chi2_gof_test(model, xdata, ydata, popt, sigma=None, full_output=False):
     ypred = model(xdata, *popt)
 
     residuals = ypred - ydata
+
+    if counts is True :
+        sigma = np.sqrt( ypred )
 
     if sigma is not None :
         residuals = residuals / sigma
