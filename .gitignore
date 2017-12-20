@@ -1,2 +1,7 @@
+#exts
 *~
 *.pyc
+
+#files and dirs
+playground.py
+tmp/
