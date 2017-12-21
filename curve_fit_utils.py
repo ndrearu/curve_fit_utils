@@ -162,6 +162,8 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
         pr_var = np.dot(pcov, jac_transposed)
         pr_var = pr_var * jac_transposed
         pr_var = np.sum(pr_var, axis=0)
+
+        print pr_var
      
     else :
 
@@ -170,37 +172,30 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
         pr_matrix_b = np.array([])
         pr_matrix_b_shape = (num_boots, npoints)
 
-        # prepare collection of resamples
+        # prepare collection of resamples as a matrix
+        # where the rows are the different resampling
         ydata_matrix_b = np.array([])
 
         if absolute_sigma :
 
+            # this can be done quickly miming a multivariate
+            # normal distribution centered at the observations
             ydata_cov = np.diag( sigma**2 )
-            ydata_matrix_b = np.random.multivariate_normal(ydata, ydata_cov, size=(num_boots))
-            
-            # for n in np.arange(num_boots) :
-            #     ydata_b = np.random.normal(loc=ydata, scale=sigma)
-            #     ydata_matrix_b = np.append(ydata_matrix_b, ydata_b)
+            ydata_matrix_b = np.random.multivariate_normal(ydata, ydata_cov, size=num_boots)
 
         else :
 
             ypred = model(xdata, *popt)
             residuals = ydata - ypred
+
+            # copy ypred on num_boots columns
+            ydata_matrix_b = np.tile(ypred, (num_boots, 1) )
+
+            # add pick with replacement of the residuals on all the matrix
+            ydata_matrix_b += np.random.choice(residuals, size=(num_boots, ndata))
+
             
-            #ydata_matrix_b = np.tile(ypred, (num_boots, 1) )
-            ydata_matrix_b = np.random.choice(residuals, size=(ndata, num_boots))
-            print ydata_matrix_b
-
-            # # bootstrap residuals at 'fixed x'
-            # ypred = model(xdata, *popt)
-            # residuals = ydata - ypred
-
-            # for n in np.arange(num_boots) :
-            #     ydata_b = ypred + np.random.choice(residuals, ndata)
-            #     ydata_matrix_b = np.append(ydata_matrix_b, ydata_b)
-
-        # ydata_matrix_b = np.reshape(ydata_matrix_b, ydata_matrix_b_shape)
-
+        # collect results from fit on all the resamplings
         for n in np.arange(num_boots) :
             ydata_b = ydata_matrix_b[n]
             popt_b, pcov_b = curve_fit(model, xdata, ydata_b, p0=popt)
@@ -209,9 +204,9 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
             pr_matrix_b = np.append(pr_matrix_b, pr_mean_b)
 
         pr_matrix_b = np.reshape(pr_matrix_b, pr_matrix_b_shape)
-        pr_var = np.var(pr_matrix_b, axis=0, ddof=1)
 
-        print pr_var
+        #compute variance
+        pr_var = np.var(pr_matrix_b, axis=0, ddof=1)
 
         
     if not absolute_sigma :
