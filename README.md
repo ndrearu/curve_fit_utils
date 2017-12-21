@@ -7,7 +7,7 @@ The aim is to provide a readable and reusable code made from scratch and based o
 
 * `confidence_band`: computes confidence (or prediction) bands of a fit model. It works both in the case of Ordinary Least Square (OLS) or Non-Linear Least Square (NLLS) and allows to handle known variances (e.g. measurements with errors) or unknown variance (with homoscedastaticity assumption). The standard construction method, robust with OLS, is also applied to NLLS regression by jacobian approximation. Alternatively, bootstrap technique can be used to obtain approximate confidence bands. The function is a sort of wrapper of [scipy.optimize.curve_fit](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html) and users (like me) which are friendly with it will found this routine very easy to use.
 
-* `chi2_gof_test`: a function that implements the Chi-Square goodness-of-fit test. For a given set of data and a model to be tested, it just computes the the Sum of Square Errors (SSE), or Sum of Square Residuals (SSR), and test the hyphotesis that it is distributed as a Chi-Square variable, returning the Mean Square Error (MSE) and/or the p-value.
+* `chi2_gof_test`: a function that implements the Chi-Square goodness-of-fit test. For a given set of data and a model to be tested, it just computes the Sum of Square Errors (SSE), or Sum of Square Residuals (SSR), and test the hypothesis that it is distributed as a Chi-Square variable, returning the Mean Square Error (MSE) and/or the p-value.
 
 A somehow more detailed description of the module `curve_fit_utils` and its routines, about both the implementation and the statistical parts, can be found in the [notes](NOTES.md) file. I highly recommend to read the description of the different functions, especially the statistical stuff in order to know what the functions are doing with the data. For a first quick use it is also possible to look directly at the [module](curve_fit_utils.py) itself where a description of the arguments needed, returns and options is reported in the definition of each routine.
 
@@ -38,12 +38,12 @@ obtaining also the fit curve `f` of the mean predicted response (just the optimi
 ```python
 from matplotlib import pyplot as plt
 plt.plot(xdata, ydata, 'bo', label='data')
-plt.plot(xdata, f, 'r--', label='fit')
+plt.plot(xdata, f, 'b--', label='fit')
 plt.fill_between(xdata, lower, upper, facecolor='gray', alpha='0.3') 
 plt.legend()
 plt.show()
 ```
-so that the confidence band is plotted in trasparency together with the fit curve and the data. Something like that ![alt text](playground/README_example.png)
+so that the confidence band is plotted in transparency together with the fit curve and the data. Something like that ![alt text](playground/README_example.png)
 
 
 Now we change our mind and make new requests: we want to define prediction bands instead of confidence bands, to define them on a different range and to use bootstrap method in the computation. Then
@@ -76,8 +76,9 @@ Andrea Rucci, Department of Physics of University of Pisa and INFN Pisa
 - ~~Add bootstrap technique to obtain approximate confidence bands in `confidence_band` routine~~
 - ~~Indicates some statistical references to the [notes](NOTES.md)~~
 - ~~Modify `chi2_gof_test` to handle with frequency/counts~~
-- Handle with bounds in `curve_fit` called in costructing confidence bands
+- Handle with bounds in `curve_fit` called in constructing confidence bands
 - Create examples comparing confidence bands with bootstrap technique
+- Add new routine to handle systematics of fit range
 
 ##### Last update 21/12/2017
 
