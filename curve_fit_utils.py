@@ -106,8 +106,8 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
     where N is the number of data points.  It is left to the user to
     decide which value of num_boots is good.
 
-    II)) In this version prediction interval can be computed only on
-    original data 'xdata' if absolute_sigma is True.
+    III) Prediction interval can be computed only on original data 
+    'xdata' if absolute_sigma is True.
 
     """
 
