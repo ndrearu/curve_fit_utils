@@ -1,6 +1,3 @@
-# TODO: documentation and statistical references
-# TODO: bootstrap method for NLLS case in confidence_band
-
 import numpy as np
 from scipy.optimize import curve_fit, approx_fprime
 from scipy.stats import norm, t, chi2
@@ -8,7 +5,7 @@ from scipy.stats import norm, t, chi2
 
 def confidence_band(model, xdata, ydata, confidence_level=0.6827,
                     xvals=None, prediction=False, bootstrap=False,
-                    num_boots=500, full_output=False, **kwargs):
+                    num_boots=1000, full_output=False, **kwargs):
 
     """Compute confidence or prediction bands of a model optimized by a
     curve fit regression with Least Square method.
@@ -91,14 +88,25 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
 
     Notes:
     ------
+
     I) The variance of the predicted values by the regression is
     defined by using the (approximate) jacobian matrix of the model
     with respect to the fit parameter. This method is robust in the
     case of Ordinary Least Square regression (OLS), i.e. when the
     model is linear in the parameter, but it is also used in the
     non-linear case (NLLS) despite a bootstrap procedure should be
-    preferred (TODO upcoming in new versions).
-    II) In this version prediction interval can be computed only on
+    preferred (see below) 
+
+    II) Approximate bootstrap confidence intervals requires different
+    methods in the case of absolute_sigma or not. If true errors are
+    given, then the bootstrap is over the measures, assuming normal
+    distribution around ydata with spread given by sigma. If
+    absolute_sigma is False, residuals are bootstrapped. In this case,
+    the number of total possible resamplings with replacement is N^N,
+    where N is the number of data points.  It is left to the user to
+    decide which value of num_boots is good.
+
+    II)) In this version prediction interval can be computed only on
     original data 'xdata' if absolute_sigma is True.
 
     """
@@ -163,8 +171,6 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
         pr_var = pr_var * jac_transposed
         pr_var = np.sum(pr_var, axis=0)
 
-        print pr_var
-     
     else :
 
         npoints = len(x)
@@ -172,6 +178,7 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
         pr_matrix_b = np.array([])
         pr_matrix_b_shape = (num_boots, npoints)
 
+        
         # prepare collection of resamples as a matrix
         # where the rows are the different resampling
         ydata_matrix_b = np.array([])
@@ -205,15 +212,17 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
 
         pr_matrix_b = np.reshape(pr_matrix_b, pr_matrix_b_shape)
 
-        #compute variance
+        # compute mean
+        pr_mean_b = np.mean(pr_matrix_b, axis=0)
+        # compute variance
         pr_var = np.var(pr_matrix_b, axis=0, ddof=1)
 
         
     if not absolute_sigma :
-        #estimate variance with MSE
+        # estimate variance with MSE
         pr_var = MSE * pr_var
 
-    #stat factors
+    # stat factors
     rtail = .5 + confidence_level / 2.
     if absolute_sigma :
         score = norm.ppf(rtail)
@@ -222,18 +231,25 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
         score = t.ppf(rtail, dof)
 
 
-    #define intervals
+    # define intervals
     if not prediction :
         pr_band = score * np.sqrt( pr_var )
     elif absolute_sigma :
-        #prediction forced on xdata
+        # prediction forced on xdata
         pr_band = score * np.sqrt( sigma + pr_var )
     else :
         pr_band = score * np.sqrt( MSE + pr_var )
         
     central = pr_mean
-    upper = pr_mean + pr_band
-    lower = pr_mean - pr_band
+
+    if bootstrap :
+        # approximate bootstrap interval is around
+        # the bootstrap mean, not symmetry a priori
+        upper = pr_mean_b + pr_band
+        lower = pr_mean_b - pr_band
+    else :
+        upper = pr_mean + pr_band
+        lower = pr_mean - pr_band
 
     if full_output :
         return upper, lower, central, popt, pcov
