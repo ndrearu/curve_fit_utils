@@ -21,9 +21,9 @@ from curve_fit_utils import confidence_band, chi2_gof_test
 ```
 Lets go straight into the example. Suppose to have some data and a model we want to fit
 ```python
-def model (x, *p):
-    return p[0]+p[1]*x**2
-    #or also NL models such as p[0]*np.exp(-p[1]*x)/x and so on
+def model (x, p0, p1):
+    return p0+p1*x**2
+    #or also NL models such as p0*np.exp(-p1*x)/x and so on
 ```
 if we are interest in constructing a confidence band around the fit curve, we obtain it by using the function `confidence_band` with the desired (say 95%) CL
 ```python
@@ -32,7 +32,7 @@ upper, lower = confidence_band(model, xdata, ydata, confidence_level=0.95)
 ```
 where `up` and `low` are Numpy arrays containing the bounds of the band. If needed one can use this routine as a sort of wrapper of [scipy.optimize.curve_fit](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html) and get the full output
 ```python
-upper, lower, f, popt, pcov = confidence_band(model, xdata, ydata, p0=[1.,1.], confidence_level=.95, full_output=True)
+upper, lower, f, popt, pcov = confidence_band(model, xdata, ydata, confidence_level=.95, full_output=True)
 ```
 obtaining also the fit curve `f` of the mean predicted response (just the optimized model), the optimized values of the parameters `popt` and the estimated covariance matrix `pcov` of them, exactly as `curve_fit` does. Finally we can plot all the results (here I use [matplotlib.pyplot](https://matplotlib.org/api/pyplot_api.html))
 ```python
