@@ -29,7 +29,4 @@ MSE, SSE, ndof, pvalue = chi2_gof_test(model, xdata, ydata, popt
 print 'Reduced Chi-Square: ', MSE
 print 'Chi-Square: ', SSE
 print 'Degrees of freedom: ', ndof
-print 'P-Value: ', pvalue
-
-# valutate the results
-if pvalue > 0 :
+print 'P-Value: ', pvalue #look at this to decide the results of the test
