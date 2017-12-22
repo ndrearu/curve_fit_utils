@@ -3,5 +3,5 @@
 *.pyc
 
 #files and dirs
-playground.py
+playground/curve_fit_utils*
 tmp/
