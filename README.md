@@ -76,7 +76,7 @@ Andrea Rucci, Department of Physics of University of Pisa and INFN Pisa
 - ~~Add bootstrap technique to obtain approximate confidence bands in `confidence_band` routine~~
 - ~~Indicates some statistical references to the [notes](NOTES.md)~~
 - ~~Modify `chi2_gof_test` to handle with frequency/counts~~
-- Handle with bounds in `curve_fit` called in constructing confidence bands
+- ~~Warning when bounds given in `curve_fit` called in constructing confidence bands~~
 - ~~Create examples comparing confidence bands with bootstrap technique~~
 - Add new routine to handle systematics of fit range
 
