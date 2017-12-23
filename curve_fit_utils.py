@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import curve_fit, approx_fprime
 from scipy.stats import norm, t, chi2
+import warnings
 
 
 def confidence_band(model, xdata, ydata, confidence_level=0.6827,
@@ -111,10 +112,13 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
 
     """
 
+    # check if bounds are provided
+    bounds = kwargs.get('bounds', None)
+    if bounds is not None :
+        warnings.warn("No guarantee bands are correct if bounds are given")
     
     # perform the fit
     popt, pcov = curve_fit(model, xdata, ydata, **kwargs)
-
 
     # some stuff needed below
     ndata = len(xdata)
@@ -138,7 +142,7 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
         if prediction and absolute_sigma :
             #if known variances, prediction only on xdata
             x = np.asarray(xvals)
-            warning.warn("Predicion interval only on original data")
+            warnings.warn("Prediction interval only on original data, output changed")
 
     else :
         x = np.asarray(xdata)
@@ -185,7 +189,7 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
 
         if absolute_sigma :
 
-            # this can be done quickly miming a multivariate
+            # this can be done quickly mimiking a multivariate
             # normal distribution centered at the observations
             ydata_cov = np.diag( sigma**2 )
             ydata_matrix_b = np.random.multivariate_normal(ydata, ydata_cov, size=num_boots)
@@ -195,7 +199,7 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
             ypred = model(xdata, *popt)
             residuals = ydata - ypred
 
-            # copy ypred on num_boots columns
+            # copy ypred on num_boots rows
             ydata_matrix_b = np.tile(ypred, (num_boots, 1) )
 
             # add pick with replacement of the residuals on all the matrix
@@ -244,7 +248,8 @@ def confidence_band(model, xdata, ydata, confidence_level=0.6827,
 
     if bootstrap :
         # approximate bootstrap interval is around
-        # the bootstrap mean, not symmetry a priori
+        # the bootstrap mean, a priori not symmetric
+	# around the 'standard' predicted mean
         upper = pr_mean_b + pr_band
         lower = pr_mean_b - pr_band
     else :
